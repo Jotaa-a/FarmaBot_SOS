@@ -8,6 +8,8 @@ public class FarmaBotSosApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(FarmaBotSosApplication.class, args);
+		System.out.println("vivee VIVEEEEE AAAHHHHH");
+		System.out.println("toy bien jefe");
 	}
 
 }
