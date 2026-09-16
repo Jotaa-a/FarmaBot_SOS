@@ -1,4 +1,4 @@
-  :root{
+:root{
     --bg: #eef3ef;
     --bg-2: #e4ece5;
     --surface: #ffffff;
@@ -97,65 +97,9 @@
     box-shadow: 0 0 0 3px rgba(127,227,180,0.25);
   }
 
-  .gear{
-    background: rgba(255,255,255,0.12);
-    border: none;
-    width: 36px; height: 36px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    color: #f4f8f6;
-    flex-shrink: 0;
-  }
-  .gear:hover{ background: rgba(255,255,255,0.22); }
-  .gear:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
+  button:focus-visible, input:focus-visible, textarea:focus-visible{
     outline: 2px solid var(--amber);
     outline-offset: 2px;
-  }
-
-  /* ---------- Settings panel ---------- */
-  .settings{
-    background: var(--surface-soft);
-    border-bottom: 1px solid var(--line);
-    padding: 0 20px;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.25s ease, padding 0.25s ease;
-    flex-shrink: 0;
-  }
-  .settings.open{ max-height: 160px; padding: 14px 20px; }
-  .settings label{
-    font-size: 0.75rem;
-    color: var(--ink-soft);
-    display: block;
-    margin-bottom: 6px;
-  }
-  .settings .row{ display: flex; gap: 8px; }
-  .settings input[type="text"]{
-    flex: 1;
-    padding: 9px 11px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--line);
-    font-size: 0.85rem;
-    font-family: inherit;
-    background: var(--surface);
-    color: var(--ink);
-  }
-  .settings .save-btn{
-    border: none;
-    background: var(--brand);
-    color: white;
-    padding: 0 14px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-size: 0.85rem;
-  }
-  .settings .save-btn:hover{ background: var(--brand-dark); }
-  .settings .mode-note{
-    font-size: 0.72rem;
-    color: var(--ink-soft);
-    margin-top: 8px;
-    line-height: 1.4;
   }
 
   /* ---------- Chat area ---------- */
@@ -271,15 +215,7 @@
     0%,100%{ box-shadow: 0 0 0 0 rgba(255,215,212,0.55); }
     50%{ box-shadow: 0 0 0 8px rgba(255,215,212,0); }
   }
-  .alert p{ font-size: 0.88rem; line-height: 1.55; margin: 8px 0 12px; position: relative; }
-  .alert .a-reason{
-    font-size: 0.78rem;
-    background: rgba(0,0,0,0.15);
-    border-radius: 8px;
-    padding: 7px 10px;
-    margin-bottom: 12px;
-    position: relative;
-  }
+  .alert p{ font-size: 0.88rem; line-height: 1.55; margin: 8px 0 14px; position: relative; }
   .alert .a-actions{ display: flex; gap: 8px; position: relative; flex-wrap: wrap; }
   .alert .a-actions a{
     flex: 1;
