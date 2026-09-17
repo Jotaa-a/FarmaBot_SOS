@@ -22,7 +22,8 @@ public class EmbeddingService {
     public List<Double> generarEmbedding(String texto) {
         Map<String, Object> body = Map.of(
                 "model", embeddingModel,
-                "input", texto
+                "input", texto,
+                "dimensions", 1536
         );
 
         Map<String, Object> response = llmClient.post()
