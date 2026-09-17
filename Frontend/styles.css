@@ -6,8 +6,8 @@
     --ink: #14231e;
     --ink-soft: #4d5f57;
     --line: #d9e2dc;
-    --brand: #0f5b53;
-    --brand-dark: #0a3f39;
+    --brand: #9b1111;
+    --brand-dark: #d41010;
     --brand-tint: #e3efec;
     --amber: #d9902f;
     --amber-tint: #fbeed9;
@@ -66,6 +66,13 @@
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+  }
+
+  .avatar img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
   }
 
   .avatar{
