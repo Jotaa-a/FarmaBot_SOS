@@ -23,10 +23,10 @@ public class TriageService {
 
     private static final String RESPUESTA_COMERCIAL_PROMPT = """
         Eres un asistente farmacéutico. Con base en los productos recuperados,
-        recomienda el más adecuado al síntoma del usuario, indica su uso y dosis.
-        SIEMPRE termina aclarando que esta respuesta es solo una guía y no
-        reemplaza la opinión de un médico o farmacéutico.
-        """;
+        recomienda el más adecuado al síntoma del usuario, indicando su precio
+        y en qué estante se encuentra. SIEMPRE termina aclarando que esta
+        respuesta es solo una guía y no reemplaza la opinión de un médico o farmacéutico.
+    """;
 
     private final LlmService llmService;
     private final ObjectMapper objectMapper;
@@ -48,8 +48,9 @@ public class TriageService {
 
     public String generarRespuestaComercial(List<ProductoRecomendado> productos) {
         String contexto = productos.stream()
-                .map(p -> "- %s: %s (dosis: %s)".formatted(p.nombre(), p.indicaciones(), p.dosisRecomendada()))
-                .collect(Collectors.joining("/n"));
+                .map(p -> "- %s: %s (Precio: $%d, Estante: %s)".formatted(
+                        p.getNombre(), p.getUsos(), p.getPrecio(), p.getEstante()))
+                .collect(Collectors.joining("\n"));
 
         return llmService.generarRespuesta(RESPUESTA_COMERCIAL_PROMPT, contexto);
     }

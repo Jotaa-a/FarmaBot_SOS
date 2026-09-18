@@ -15,51 +15,58 @@ la función `vector_aleatorio()` por una llamada real a OpenRouter/OpenAI
 para generar embeddings verdaderos de cada producto.
 """
 
-import random
 import requests
+import os
+import mysql.connector
+
+MYSQL_CONFIG = {
+    "host" : "localhost",
+    "user" : "campus2023",
+    "password" : os.environ.get("MYSQL_PASSWORD"),
+    "database" : "drogeria",
+}
 
 QDRANT_URL = "http://localhost:6333"
 COLLECTION = "drogueria_catalogo"
-VECTOR_SIZE = 1536  # debe coincidir con el tamaño real de tu modelo de embeddings
+VECTOR_SIZE = 1536  
 
-PRODUCTOS = [
-    {
-        "id": 1,
-        "nombre": "Acetaminofén 500mg",
-        "indicaciones": "Alivio del dolor de cabeza leve y fiebre",
-        "categoria": "Analgésico",
-        "dosis_recomendada": "1 tableta cada 8 horas",
-    },
-    {
-        "id": 2,
-        "nombre": "Loratadina 10mg",
-        "indicaciones": "Alivio de alergias, rinitis y estornudos",
-        "categoria": "Antihistamínico",
-        "dosis_recomendada": "1 tableta al día",
-    },
-    {
-        "id": 3,
-        "nombre": "Ibuprofeno 400mg",
-        "indicaciones": "Dolor muscular, dolor de cabeza, inflamación leve",
-        "categoria": "Antiinflamatorio",
-        "dosis_recomendada": "1 tableta cada 8 horas con alimentos",
-    },
-    {
-        "id": 4,
-        "nombre": "Sales de rehidratación oral",
-        "indicaciones": "Diarrea leve, deshidratación por vómito",
-        "categoria": "Rehidratante",
-        "dosis_recomendada": "1 sobre disuelto en 1 litro de agua",
-    },
-]
+OPENROUTER_URL = "https://openrouter.ai/api/v1/embeddings"
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+EMBEDDING_MODEL = "google/gemini-embedding-2"
 
 
-def vector_aleatorio(size: int = VECTOR_SIZE) -> list[float]:
-    """Genera un vector aleatorio normalizado, solo para pruebas mecánicas."""
-    vec = [random.uniform(-1, 1) for _ in range(size)]
-    norma = sum(v * v for v in vec) ** 0.5
-    return [v / norma for v in vec]
+def obtener_productos_mysql():
+    conn = mysql.connector.connect(**MYSQL_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT id, nombre, descripcion, usos, precio, estante FROM producto")
+    productos = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return productos
 
+
+def generar_embedding(texto: str) -> list[float]:
+    if not OPENROUTER_API_KEY:
+        raise RuntimeError(
+            "Falta la variable de entorno OPENROUTER_API_KEY. "
+            "Configúrala antes de correr el script."
+        )
+ 
+    resp = requests.post(
+        OPENROUTER_URL,
+        headers={
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": EMBEDDING_MODEL,
+            "input": texto,
+            "dimensions": VECTOR_SIZE,
+        },
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return data["data"][0]["embedding"]
 
 def crear_coleccion():
     resp = requests.put(
@@ -68,35 +75,45 @@ def crear_coleccion():
     )
     print("Crear colección:", resp.status_code, resp.json())
 
+def sincronizar():
+    productos = obtener_productos_mysql()
+    print(f"{len(productos)} productos encontrados en MYSQL. \n")
 
-def insertar_productos():
     points = []
-    for p in PRODUCTOS:
+    for p in productos:
+        texto = f"{p['nombre']}. Usos: {p['usos']}. {p['descripcion']}"
+        print(f"Generando embedding: {p['nombre']} (id={p['id']})")
+        vector = generar_embedding(texto)
+ 
         points.append({
-            "id": p["id"],
-            "vector": vector_aleatorio(),
+            "id": p["id"],  # MISMO id que en MySQL, para poder cruzarlos después
+            "vector": vector,
             "payload": {
                 "nombre": p["nombre"],
-                "indicaciones": p["indicaciones"],
-                "categoria": p["categoria"],
-                "dosis_recomendada": p["dosis_recomendada"],
+                "usos": p["usos"],
             },
         })
 
-    resp = requests.put(
+        resp = requests.put(
         f"{QDRANT_URL}/collections/{COLLECTION}/points",
         json={"points": points},
+        )
+        print("\nInsertar en Qdrant:", resp.status_code, resp.json())
+
+
+def probar_busqueda(consulta: str):
+    print(f"\nProbando búsqueda con: '{consulta}'")
+    vector = generar_embedding(consulta)
+    resp = requests.post(
+        f"{QDRANT_URL}/collections/{COLLECTION}/points/search",
+        json={"vector": vector, "limit": 3, "with_payload": True},
     )
-    print("Insertar productos:", resp.status_code, resp.json())
-
-
-def verificar():
-    resp = requests.get(f"{QDRANT_URL}/collections/{COLLECTION}")
-    print("Info de la colección:", resp.json())
+    resultados = resp.json().get("result", [])
+    for r in resultados:
+        print(f"  - {r['payload']['nombre']} (score: {r['score']:.4f})")
 
 
 if __name__ == "__main__":
     crear_coleccion()
     insertar_productos()
-    verificar()
-    print(f"\nListo. Se insertaron {len(PRODUCTOS)} productos en '{COLLECTION}'.")
+    print(f"\nListo. Se insertaron {len(PRODUCTOS)} productos con embeddings reales.")

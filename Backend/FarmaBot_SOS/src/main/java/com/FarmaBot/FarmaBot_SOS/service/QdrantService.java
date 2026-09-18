@@ -18,18 +18,18 @@ public class QdrantService {
     @Value("${qdrant.collection}")
     private String collection;
 
-    public QdrantService(RestClient qdrantClient, EmbeddingService embeddingService){
+    public QdrantService(RestClient qdrantClient, EmbeddingService embeddingService) {
         this.qdrantClient = qdrantClient;
         this.embeddingService = embeddingService;
     }
 
-    public List<ProductoRecomendado> buscarSimilares(String consulta, int k){
+    public List<Long> buscarIdsSimilares(String consulta, int k) {
         List<Double> vector = embeddingService.generarEmbedding(consulta);
 
         Map<String, Object> body = Map.of(
                 "vector", vector,
                 "limit", k,
-                "with_payload", true
+                "with_payload", false
         );
 
         Map<String, Object> response = qdrantClient.post()
@@ -41,21 +41,7 @@ public class QdrantService {
         List<Map<String, Object>> resultados = (List<Map<String, Object>>) response.get("result");
 
         return resultados.stream()
-                .map(this::mapearProducto)
+                .map(r -> ((Number) r.get("id")).longValue())
                 .collect(Collectors.toList());
     }
-
-    private ProductoRecomendado mapearProducto(Map<String, Object> punto) {
-        Map<String, Object> payload = (Map<String, Object>) punto.get("payload");
-        double score = ((Number) punto.get("score")).doubleValue();
-
-        return new ProductoRecomendado(
-                (String) payload.get("nombre"),
-                (String) payload.get("indicaciones"),
-                (String) payload.get("categoria"),
-                (String) payload.get("dosis_recomendada"),
-                score
-        );
-    }
-
 }
