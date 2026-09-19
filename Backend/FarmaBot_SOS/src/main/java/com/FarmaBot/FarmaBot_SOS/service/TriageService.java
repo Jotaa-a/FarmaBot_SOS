@@ -2,6 +2,8 @@ package com.FarmaBot.FarmaBot_SOS.service;
 
 import com.FarmaBot.FarmaBot_SOS.dto.ProductoRecomendado;
 import com.FarmaBot.FarmaBot_SOS.dto.TriageResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
@@ -10,6 +12,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class TriageService {
+
+    private static final Logger log = LoggerFactory.getLogger(TriageService.class);
+
     private static final String TRIAGE_PROMPT = """
         Eres un clasificador de riesgo médico para una droguería.
         Analiza el mensaje del usuario y responde SOLO con un JSON válido,
@@ -39,8 +44,12 @@ public class TriageService {
     public TriageResult evaluar(String mensajeUsuario){
         String jsonRespuesta = llmService.generarRespuesta(TRIAGE_PROMPT, mensajeUsuario);
         try {
-            return objectMapper.readValue(jsonRespuesta, TriageResult.class);
+            TriageResult resultado = objectMapper.readValue(jsonRespuesta, TriageResult.class);
+            log.info("Triaje realizado - esEmergencia: {}, nivelRiesgo: {}, razon: {}",
+                    resultado.esEmergencia(), resultado.nivelRiesgo(), resultado.razon());
+            return resultado;
         } catch (Exception e) {
+            log.error("Fallo al parsear respuesta del LLM: {}", e.getMessage());
             return new TriageResult(false, "BAJO",
                     "No se puede clasificar automaticamente: " + e.getMessage());
         }
@@ -49,7 +58,7 @@ public class TriageService {
     public String generarRespuestaComercial(List<ProductoRecomendado> productos) {
         String contexto = productos.stream()
                 .map(p -> "- %s: %s (Precio: $%d, Estante: %s)".formatted(
-                        p.getNombre(), p.getUsos(), p.getPrecio(), p.getEstante()))
+                        p.nombre(), p.usos(), p.precio(), p.estante()))
                 .collect(Collectors.joining("\n"));
 
         return llmService.generarRespuesta(RESPUESTA_COMERCIAL_PROMPT, contexto);

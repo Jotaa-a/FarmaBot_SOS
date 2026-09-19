@@ -29,8 +29,6 @@ public class LlmService {
                 )
         );
 
-        System.out.println("Body enviado a OpenRouter: " + body);
-
         Map<String, Object> response = llmClient.post()
                 .uri("/chat/completions")
                 .body(body)

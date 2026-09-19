@@ -11,7 +11,7 @@ public record ChatResponse (
         return new ChatResponse(
                 true,
                 "Esto podria ser una EMERGENCIA: " + razon +
-                        ". Por favor busca atencion inmediata en la linea 123 o a tu EX :).",
+                        ". Por favor busca atencion inmediata en la linea 123.",
                 List.of()
         );
     }
